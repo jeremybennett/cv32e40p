@@ -21,6 +21,7 @@ VERILATOR = verilator
 VDIR = obj_dir
 CPPFLAGS = -I$(VDIR) `pkg-config --cflags verilator`
 CXXFLAGS = -Wall -Werror -std=c++11 -Wno-aligned-new
+LDFLAGS = 
 CXX = g++
 LD = g++
 
@@ -38,40 +39,55 @@ TOP = top
 
 # Verilator elements
 
-VSRC = dp_ram.sv                                 \
-       ram.sv                                    \
-       top.sv                                    \
-       ../../rtl/fpnew/src/fpnew_pkg.sv          \
-       ../../rtl/include/apu_core_package.sv     \
-       ../../rtl/include/riscv_defines.sv        \
-       ../../rtl/include/riscv_tracer_defines.sv \
-       ../../rtl/register_file_test_wrap.sv      \
-       ../../rtl/cv32e40p_sim_clock_gate.sv      \
-       ../../rtl/riscv_alu.sv                    \
-       ../../rtl/riscv_alu_div.sv                \
-       ../../rtl/riscv_compressed_decoder.sv     \
-       ../../rtl/riscv_controller.sv             \
-       ../../rtl/riscv_cs_registers.sv           \
-       ../../rtl/riscv_decoder.sv                \
-       ../../rtl/riscv_int_controller.sv         \
-       ../../rtl/riscv_ex_stage.sv               \
-       ../../rtl/riscv_hwloop_controller.sv      \
-       ../../rtl/riscv_hwloop_regs.sv            \
-       ../../rtl/riscv_id_stage.sv               \
-       ../../rtl/riscv_if_stage.sv               \
-       ../../rtl/riscv_load_store_unit.sv        \
-       ../../rtl/riscv_mult.sv                   \
-       ../../rtl/riscv_prefetch_buffer.sv        \
-       ../../rtl/riscv_prefetch_L0_buffer.sv     \
-       ../../rtl/riscv_register_file.sv          \
-       ../../rtl/riscv_core.sv                   \
-       ../../rtl/riscv_apu_disp.sv               \
-       ../../rtl/riscv_L0_buffer.sv              \
+VSRC = dp_ram.sv                                           \
+       ram.sv                                              \
+       top.sv                                              \
+       ../../rtl/fpnew/src/fpnew_pkg.sv                    \
+       ../../rtl/fpnew/src/fpnew_cast_multi.sv             \
+       ../../rtl/fpnew/src/fpnew_classifier.sv             \
+       ../../rtl/fpnew/src/fpnew_divsqrt_multi.sv          \
+       ../../rtl/fpnew/src/fpnew_fma.sv                    \
+       ../../rtl/fpnew/src/fpnew_fma_multi.sv              \
+       ../../rtl/fpnew/src/fpnew_noncomp.sv                \
+       ../../rtl/fpnew/src/fpnew_opgroup_block.sv          \
+       ../../rtl/fpnew/src/fpnew_opgroup_fmt_slice.sv      \
+       ../../rtl/fpnew/src/fpnew_opgroup_multifmt_slice.sv \
+       ../../rtl/fpnew/src/fpnew_rounding.sv               \
+       ../../rtl/fpnew/src/fpnew_top.sv                    \
+       ../../rtl/include/apu_core_package.sv               \
+       ../../rtl/include/riscv_defines.sv                  \
+       ../../rtl/include/riscv_tracer_defines.sv           \
+       ../../rtl/cv32e40p_sim_clock_gate.sv                \
+       ../../rtl/riscv_register_file.sv                    \
+       ../../rtl/register_file_test_wrap.sv                \
+       ../../rtl/riscv_alu.sv                              \
+       ../../rtl/riscv_alu_div.sv                          \
+       ../../rtl/riscv_ff_one.sv                           \
+       ../../rtl/riscv_popcnt.sv                           \
+       ../../rtl/riscv_compressed_decoder.sv               \
+       ../../rtl/riscv_controller.sv                       \
+       ../../rtl/riscv_cs_registers.sv                     \
+       ../../rtl/riscv_decoder.sv                          \
+       ../../rtl/riscv_int_controller.sv                   \
+       ../../rtl/riscv_ex_stage.sv                         \
+       ../../rtl/riscv_hwloop_controller.sv                \
+       ../../rtl/riscv_hwloop_regs.sv                      \
+       ../../rtl/riscv_id_stage.sv                         \
+       ../../rtl/riscv_if_stage.sv                         \
+       ../../rtl/riscv_load_store_unit.sv                  \
+       ../../rtl/riscv_mult.sv                             \
+       ../../rtl/riscv_prefetch_buffer.sv                  \
+       ../../rtl/riscv_prefetch_L0_buffer.sv               \
+       ../../rtl/riscv_core.sv                             \
+       ../../rtl/riscv_apu_disp.sv                         \
+       ../../rtl/riscv_fetch_fifo.sv                       \
+       ../../rtl/riscv_L0_buffer.sv                        \
        ../../rtl/riscv_pmp.sv
 
-VINC = ../../rtl/include
+VINC = +incdir+../../rtl/include                        \
+       +incdir+../../rtl/fpnew/src/common_cells/include
 
-VOBJS = $(VDIR)/verilated.o       \
+VOBJS = $(VDIR)/verilated.o         \
         $(VDIR)/verilated_vcd_c.o
 
 VLIB = $(VDIR)/V$(TOP)__ALL.a
@@ -83,7 +99,7 @@ VMK  = $(VDIR)/$(VSMK)
 all: $(EXE)
 
 $(EXE): $(VLIB) $(VOBJS) $(OBJS)
-	$(LD) -o $@ $(OBJS) $(VLIB) $(VOBJS)
+	$(LD) -o $@ $(OBJS) $(VLIB) $(VOBJS) $(LDFLAGS)
 
 $(VOBJS): $(VMK)
 	for f in $@; \
@@ -107,7 +123,7 @@ $(VMK): $(VSRC)
 	          -Wno-UNOPTFLAT -Wno-WIDTH -Wno-fatal -Wno-BLKANDNBLK \
 		  --top-module top \
 	          --Mdir $(VDIR) --trace -DPULP_FPGA_EMUL -cc \
-	          +incdir+$(VINC) $(VSRC) $(SRC) --exe
+	          $(VINC) $(VSRC) $(SRC) --exe
 
 
 .PHONY: clean
